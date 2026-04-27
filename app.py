@@ -69,7 +69,7 @@ with st.expander("Parameter guide", expanded=False):
 - `k` — share cap, paid when at maxScore. Sets the unit; only meaningful relative to `a` and `minimum`.
 
 **Economic** (apply to both A and B; Mechanism C reuses these too):
-- `checkpoint reward` — AZTEC pool minted per checkpoint. On-chain default is **500** (read from `Rollup.getCheckpointReward()`). ↑ proportionally scales all rewards.
+- `prover reward pool` — AZTEC paid to **provers** per epoch (one proof per epoch, where 1 epoch = 32 checkpoints). Default **4,800** = 150 AZTEC/checkpoint × 32. The sequencer share is excluded — see `docs/mainnet-rewards.md` for the on-chain split. ↑ proportionally scales all rewards.
 - `sequencer split (bps)` — fraction taken by the sequencer before the prover pool. ↑ less for provers.
 - `AZTEC → USD` — token price for USD profitability conversion. ↑ rewards worth more in USD; provers more profitable.
 - `Hardware cost per epoch` — baseline infra cost paid every epoch a prover is online (sunk in mechanisms A/B; gated on `active` in C). Default **$1.14/epoch** is derived from the conservative 1-yr reserved AWS `c6i.16xlarge` price (~$1,300/mo, 64 vCPU / 128 GiB, matching the 32-core / 64 vCPU / 128 GB / 10 GB SSD reference spec). Epoch = 32 checkpoints × 72 s = 2304 s, giving ~1,141 epochs/month. Pricing reference: [instances.vantage.sh/aws/ec2/c6i.16xlarge](https://instances.vantage.sh/aws/ec2/c6i.16xlarge). Other points on the curve: on-demand ≈$1.71–$1.84/epoch, 3-yr reserved ≈$0.66–$0.74/epoch, spot ≈$0.44–$0.79/epoch.
@@ -177,9 +177,16 @@ sB_min = aB[1].number_input("minimum", 0, 10_000_000, 10_000, 1_000, key="b_min"
 sB_k = st.sidebar.number_input("k (max shares)", 1, 10_000_000, 1_000_000, 10_000, key="b_k")
 
 st.sidebar.header("Economic")
-checkpoint_reward = st.sidebar.number_input(
-    "checkpoint reward (AZTEC / checkpoint)", 0.0, 100_000.0, 500.0, 10.0, format="%.2f",
-    help="On-chain default from Rollup.getCheckpointReward() = 500 AZTEC. Tunable.",
+epoch_reward = st.sidebar.number_input(
+    "prover reward pool (AZTEC / epoch)", 0.0, 1_000_000.0, 4_800.0, 50.0, format="%.2f",
+    help=(
+        "Prover-only reward pool minted per **epoch** (one proof per epoch). "
+        "Default **4,800 AZTEC** = 150 AZTEC/checkpoint × 32 checkpoints/epoch. "
+        "On-chain mainnet: `getCheckpointReward()` returns 500 AZTEC per checkpoint, "
+        "of which 30% (150) goes to the prover pool and 70% (350) to the sequencer "
+        "(`sequencerBps = 7000`). The sequencer share is out of scope here — this "
+        "simulation models prover payouts only. See `docs/mainnet-rewards.md`."
+    ),
 )
 sequencer_bps = st.sidebar.slider("sequencer split (bps)", 0, 10_000, 0, 100)
 hw_cost = st.sidebar.number_input(
@@ -232,10 +239,11 @@ mc_n_epochs = st.sidebar.number_input("epochs", 10, 50_000, 987, 10, key="mc_T",
 mc_target = st.sidebar.number_input("target submitters", 1, 100, 5, 1, key="mc_target",
     help="Pool flat at n=target, +max% at n=0, −max% at n≥2·target.")
 mc_base_reward = st.sidebar.number_input(
-    "starting per-epoch reward (AZTEC)", 0.0, 1_000_000.0, float(checkpoint_reward), 10.0,
+    "starting per-epoch reward (AZTEC)", 0.0, 10_000_000.0, float(epoch_reward), 100.0,
     key="mc_base_reward", format="%.2f",
-    help="Pool minted per epoch at n_submitters = target. Defaults to the global checkpoint reward "
-    "but can be tuned independently for Mechanism C.",
+    help="Pool minted per epoch at n_submitters = target. Defaults to the global epoch reward "
+    "(4,800 AZTEC = 32 × 150 AZTEC/checkpoint to provers) but can be tuned "
+    "independently for Mechanism C.",
 )
 mc_max_move = st.sidebar.slider("max move %", 0.0, 50.0, 12.5, 0.5, key="mc_move", format="%.1f")
 mc_dropout_ratio = st.sidebar.number_input("dropout cost:reward ratio", 1.0, 10.0, 2.0, 0.1, key="mc_drop_r",
@@ -268,7 +276,7 @@ mc_hw_costs = tuple(float(v) for v in mc_costs_df["HW $/epoch"].tolist())
 # ──────────────── Run ────────────────
 cfg_A = (sA_increment, sA_max, sA_a, sA_min, sA_k)
 cfg_B = (sB_increment, sB_max, sB_a, sB_min, sB_k)
-econ = (float(checkpoint_reward), int(sequencer_bps), float(aztec_usd), float(hw_cost), float(gas_cost))
+econ = (float(epoch_reward), int(sequencer_bps), float(aztec_usd), float(hw_cost), float(gas_cost))
 
 submissions, labels = get_submissions()
 res_A = run_sim_real(cfg_A, econ, distribution, float(hw_cost_stddev_pct), int(seed))
@@ -542,7 +550,7 @@ with tab7:
                          name="A pool", secondary_y=False)
     fig_pool.add_scatter(x=epochs_axis, y=mc_B["pool_per_epoch_aztec"], mode="lines",
                          line=dict(dash="dash"), name="B pool", secondary_y=False)
-    fig_pool.add_hline(y=float(checkpoint_reward), line_dash="dot", line_color="gray",
+    fig_pool.add_hline(y=float(epoch_reward), line_dash="dot", line_color="gray",
                        annotation_text="base")
     if show_gas_pool:
         _add_mc_gas(fig_pool)

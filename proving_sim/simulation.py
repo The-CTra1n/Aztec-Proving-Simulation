@@ -14,7 +14,8 @@ from proving_sim.booster import ActivityScore, BoostConfig, record_submission, t
 
 @dataclass(frozen=True)
 class EconomicConfig:
-    checkpoint_reward: float             # AZTEC pool minted per epoch (pre sequencer split)
+    epoch_reward: float                  # AZTEC pool minted per epoch (pre sequencer split).
+                                         # On-chain: getCheckpointReward() × 32 (32 checkpoints/epoch).
     sequencer_bps: int                   # sequencer take in basis points
     aztec_usd: float                     # AZTEC → USD conversion
     hardware_cost_per_epoch_usd: float   # per-prover infra cost each epoch (sunk, whether submitting or not)
@@ -22,7 +23,7 @@ class EconomicConfig:
 
     @property
     def prover_pool(self) -> float:
-        return self.checkpoint_reward * (1.0 - self.sequencer_bps / 10_000.0)
+        return self.epoch_reward * (1.0 - self.sequencer_bps / 10_000.0)
 
 
 def simulate(

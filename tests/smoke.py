@@ -12,7 +12,7 @@ mode = sys.argv[1] if len(sys.argv) > 1 else "bernoulli"
 sub = synthesize_submissions(ref, n, mode=mode, seed=42)
 print(f"mode={mode} submissions shape={sub.shape} density={sub.mean():.3f}")
 
-econ = EconomicConfig(checkpoint_reward=200.0, sequencer_bps=0, aztec_usd=0.02, hardware_cost_per_epoch_usd=1.0)
+econ = EconomicConfig(epoch_reward=200.0, sequencer_bps=0, aztec_usd=0.02, hardware_cost_per_epoch_usd=1.0)
 
 for label, cfg, csv_col in [("current", BoostConfig.current(), "Current_Earned"),
                             ("proposed", BoostConfig.proposed(), "Proposed_Earned")]:

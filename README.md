@@ -137,8 +137,11 @@ tab:
 
 The remaining economic inputs are in the sidebar under "Economic":
 
-- **`checkpoint reward`** — AZTEC minted per checkpoint. On-chain default is
-  500 (`Rollup.getCheckpointReward()`).
+- **`prover reward pool`** — AZTEC paid to **provers** per epoch (one proof
+  submission per epoch). Default **4,800 AZTEC** = 150 AZTEC/checkpoint × 32
+  checkpoints/epoch. This is the prover share only; the sequencer's 70 % cut is
+  out of scope. On-chain values verified from the live Rollup contract — see
+  [`docs/mainnet-rewards.md`](docs/mainnet-rewards.md).
 - **`sequencer split (bps)`** — fraction skimmed before the prover pool.
 - **`Hardware cost per epoch`** — baseline per-prover infra cost. Default
   **$1.14/epoch**, derived from the conservative 1-yr-reserved AWS
