@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+.venv-win/
+venv/
+.streamlit/
+.pytest_cache/
+.ipynb_checkpoints/
+build/
+dist/
+.env
+.env.*
+secrets.toml
+
+# Per-user Claude Code settings (local permission grants, etc.)
+.claude/settings.local.json
+
+# Etherscan raw-log cache — regenerable from `python -m proving_sim.fetch`.
+# The processed Parquet is committed; the 28 MB raw JSON is not.
+data/submissions.raw.json

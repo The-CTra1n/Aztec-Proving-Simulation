@@ -1,0 +1,27 @@
+[project]
+name = "proving-simulation"
+version = "0.1.0"
+description = "Simulation of Aztec L2 prover reward mechanisms and proving expenditure"
+requires-python = ">=3.11"
+dependencies = [
+    "streamlit>=1.30",
+    "pandas>=2.1",
+    "numpy>=1.26",
+    "plotly>=5.18",
+    "requests>=2.31",
+    "pyarrow>=15.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["proving_sim*"]
